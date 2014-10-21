@@ -21,6 +21,8 @@ classifiers = [
         'Topic :: Scientific/Engineering :: GIS',
 ]
 
+requires = ['Pillow', 'paste']
+
 # We'd like to let debian install the /etc/tilecache.cfg,
 # but put them in tilecache/tilecache.cfg using setuptools
 # otherwise. 
@@ -45,6 +47,7 @@ setup(name='TileCache',
       zip_safe=False,
       test_suite = 'tests.run_doc_tests',
       license="BSD",
+      install_requires=requires,
       classifiers=classifiers,
       entry_points = """
     [paste.app_factory]
