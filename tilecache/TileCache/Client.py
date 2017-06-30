@@ -8,11 +8,11 @@ import httplib
 try:
     from optparse import OptionParser
 except ImportError:
-    OptionParser = False 
+    OptionParser = False
 
 # setting this to True will exchange more useful error messages
 # for privacy, hiding URLs and error messages.
-HIDE_ALL = False 
+HIDE_ALL = False
 
 class WMS (object):
     fields = ("bbox", "srs", "width", "height", "format", "layers", "styles")
@@ -48,7 +48,7 @@ class WMS (object):
 
     def url (self):
         return self.base + urllib.urlencode(self.params)
-    
+
     def fetch (self):
         urlrequest = urllib2.Request(self.url())
         # urlrequest.add_header("User-Agent",
@@ -85,7 +85,7 @@ def seed (svc, layer, levels = (0, 5), bbox = None, padding = 0, force = False, 
 
     start = time.time()
     total = 0
-    
+
     for z in range(*levels):
         bottomleft = layer.getClosestCell(z, bbox[0:2])
         topright   = layer.getClosestCell(z, bbox[2:4])
@@ -93,7 +93,7 @@ def seed (svc, layer, levels = (0, 5), bbox = None, padding = 0, force = False, 
         # This causes a termination if run from cron or in background if shell is terminated
         #print >>sys.stderr, "###### %s, %s" % (bottomleft, topright)
         print "###### %s, %s" % (bottomleft, topright)
-        zcount = 0 
+        zcount = 0
         metaSize = layer.getMetaSize(z)
         ztiles = int(math.ceil(float(topright[1] - bottomleft[1]) / metaSize[0]) * math.ceil(float(topright[0] - bottomleft[0]) / metaSize[1]))
         if reverse:
@@ -110,6 +110,12 @@ def seed (svc, layer, levels = (0, 5), bbox = None, padding = 0, force = False, 
             startY = bottomleft[1] - (1 * padding)
             endY = topright[1] + metaSize[1] + (1 * padding)
             stepY = metaSize[1]
+        startX = int(startX)
+        startY = int(startY)
+        endX = int(endX)
+        endY = int(endY)
+        stepX = int(stepX)
+        stepY = int(stepY)
         for y in range(startY, endY, stepY):
             for x in range(startX, endX, stepX):
                 tileStart = time.time()
@@ -128,28 +134,28 @@ def main ():
     if not OptionParser:
         raise Exception("TileCache seeding requires optparse/OptionParser. Your Python may be too old.\nSend email to the mailing list \n(http://openlayers.org/mailman/listinfo/tilecache) about this problem for help.")
     usage = "usage: %prog <layer> [<zoom start> <zoom stop>]"
-    
+
     parser = OptionParser(usage=usage, version="%prog $Id$")
-    
+
     parser.add_option("-f","--force", action="store_true", dest="force", default = False,
                       help="force recreation of tiles even if they are already in cache")
-    
+
     parser.add_option("-b","--bbox",action="store", type="string", dest="bbox", default = None,
                       help="restrict to specified bounding box")
-    parser.add_option("-c", "--config", action="store", type="string", dest="tilecacheconfig", 
-        default=None, help="path to configuration file")                 
+    parser.add_option("-c", "--config", action="store", type="string", dest="tilecacheconfig",
+        default=None, help="path to configuration file")
     parser.add_option("-d","--delay",action="store", type="int", dest="delay", default = 0,
         help="Delay time between requests.")
     parser.add_option("-p","--padding",action="store", type="int", dest="padding", default = 0,
                       help="extra margin tiles to seed around target area. Defaults to 0 "+
                       "(some edge tiles might be missing).      A value of 1 ensures all tiles "+
                       "will be created, but some tiles may be wholly outside your bbox")
-   
+
     parser.add_option("-r","--reverse", action="store_true", dest="reverse", default = False,
                       help="Reverse order of seeding tiles")
-    
+
     (options, args) = parser.parse_args()
-    
+
     if len(args)>3:
         parser.error("Incorrect number of arguments. bbox and padding are now options (-b and -p)")
 
@@ -160,18 +166,18 @@ def main ():
         configFile = options.tilecacheconfig
         print "Config file set to %s" % (configFile)
         cfgs = cfgs + [configFile]
- 
+
     svc = Service.load(cfgs)
 
     layer = svc.layers[args[0]]
-    
+
     if options.bbox:
         bboxlist = map(float,options.bbox.split(","))
     else:
         bboxlist=None
-    
-        
-    if len(args)>1:    
+
+
+    if len(args)>1:
         seed(svc, layer, map(int, args[1:3]), bboxlist , padding=options.padding, force = options.force, reverse = options.reverse, delay=options.delay)
     else:
         for line in sys.stdin.readlines():
