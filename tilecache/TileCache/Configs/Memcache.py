@@ -47,7 +47,7 @@ class Memcache(Config):
         if data:
             try:
                 return json.loads(data)
-            except Exception, e:
+            except Exception as e:
                 sys.stderr.write('Unable to parse config for layer %s (%s)\n' % (key, e,))
                 return None
         return None
@@ -101,7 +101,7 @@ class Memcache(Config):
     ###########################################################################
 
     def add (self):
-        if objargs.has_key('name'):
+        if 'name' in objargs:
             key = self._getKey(name)
             sys.stderr.write('Memcache add for %s\n' % (key,))
 
@@ -114,8 +114,8 @@ class Memcache(Config):
                 
                 return True
 
-            except Exception, e:
-                raise Exception("Update failed.\n".join(traceback.format_tb(sys.exc_traceback)))
+            except Exception as e:
+                raise Exception("Update failed.\n".join(traceback.format_tb(sys.exc_info()[2])))
                 
         return False
     
@@ -133,7 +133,7 @@ class Memcache(Config):
 
     def update (self, **objargs ):
         
-        if objargs.has_key('name'):
+        if 'name' in objargs:
             key = self._getKey(name)
             sys.stderr.write('Memcache update for %s\n' % (key,))
 
@@ -150,8 +150,8 @@ class Memcache(Config):
                     
                     return True
 
-            except Exception, e:
-                raise Exception("Update failed.\n".join(traceback.format_tb(sys.exc_traceback)))
+            except Exception as e:
+                raise Exception("Update failed.\n".join(traceback.format_tb(sys.exc_info()[2])))
                 
         return False
 
@@ -175,7 +175,7 @@ class Memcache(Config):
                 return True
 
             except:
-                raise Exception("Delete failed.\n".join(traceback.format_tb(sys.exc_traceback)))
+                raise Exception("Delete failed.\n".join(traceback.format_tb(sys.exc_info()[2])))
 
         return False
     

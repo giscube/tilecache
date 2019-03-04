@@ -21,7 +21,7 @@ if __name__ == "__main__":
     httpd = simple_server.WSGIServer(('',8080), simple_server.WSGIRequestHandler,)
     httpd.set_app(wsgiApp)
     try:
-        print "Listening on port %s" % 8080 
+        print("Listening on port %s" % 8080) 
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print "Shutting down."
+        print("Shutting down.")

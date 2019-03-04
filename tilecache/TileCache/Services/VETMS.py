@@ -12,9 +12,9 @@ class VETMS (Request):
     def parse (self, fields, path, host):
         """Take in VETMS params and return a tile."""
         for key in ['layer', 'tile']: 
-            if fields.has_key(key.upper()):
+            if key.upper() in fields:
                 fields[key] = fields[key.upper()] 
-            elif not fields.has_key(key):
+            elif key not in fields:
                 fields[key] = ""
         layer = self.getLayer(fields['layer'])
         tilenumber = str(fields['tile'])

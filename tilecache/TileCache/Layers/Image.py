@@ -20,7 +20,7 @@ class Image(MetaLayer):
         MetaLayer.__init__(self, name, **kwargs) 
         
         self.file = file
-        self.filebounds  = map(float,filebounds.split(","))
+        self.filebounds  = list(map(float,filebounds.split(",")))
         self.image = PILImage.open(self.file)
         self.image_size = self.image.size
         self.image_res = [(self.filebounds[2] - self.filebounds[0]) / self.image_size[0], 
@@ -33,7 +33,7 @@ class Image(MetaLayer):
 
     def renderTile(self, tile):
         import PIL.Image as PILImage 
-        import StringIO
+        import io
         bounds = tile.bounds()
         size = tile.size()
         min_x = (bounds[0] - self.filebounds[0]) / self.image_res[0]   
@@ -60,8 +60,8 @@ class Image(MetaLayer):
             scaling = PILImage.BICUBIC
         sub = sub.resize(size, scaling)
 
-        buffer = StringIO.StringIO()
-        if self.image.info.has_key('transparency'):
+        buffer = io.StringIO()
+        if 'transparency' in self.image.info:
             sub.save(buffer, self.extension, transparency=self.image.info['transparency'])
         else:
             sub.save(buffer, self.extension)

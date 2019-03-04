@@ -12,7 +12,8 @@ class TwistedClient (DatagramProtocol, Client):
         DatagramProtocol.__init__(self, *args, **kwargs)
         Client.__init__(self, service, key, None, weight)
     
-    def datagramReceived(self, data, (host, port)):
+    def datagramReceived(self, data, xxx_todo_changeme):
+        (host, port) = xxx_todo_changeme
         self.handle(data, (host, port))
 
     def send (self, peer, msg):

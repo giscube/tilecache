@@ -58,7 +58,7 @@ class GDAL(MetaLayer):
 
     def renderTile(self, tile):
         import PIL.Image as PILImage 
-        import StringIO
+        import io
         bounds = tile.bounds()
         im = None
         
@@ -124,7 +124,7 @@ class GDAL(MetaLayer):
         big = PIL.Image.new("RGBA", tile.size(), (0,0,0,0))
         if im:
             big.paste(im, (tile_offset_left, tile_offset_top))
-        buffer = StringIO.StringIO()
+        buffer = io.StringIO()
         
         big.save(buffer, self.extension)
 

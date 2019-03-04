@@ -49,7 +49,7 @@ class Mapnik(MetaLayer):
                     if l.name not in layers:
                         del m.layers[layer_num]
                         if self.debug:
-                            print >>sys.stderr, "Removed layer %s loaded from %s, not in list: %s" % (l.name, self.mapfile, layers)
+                            print("Removed layer %s loaded from %s, not in list: %s" % (l.name, self.mapfile, layers), file=sys.stderr)
                         
             # this will insure that it gets cached in mod_python
             self.mapnik = m
@@ -74,11 +74,11 @@ class Mapnik(MetaLayer):
             return tile.data
         elif hasattr(mapnik, 'rawdata'):
             data = mapnik.rawdata(im)
-            import PIL.Image, StringIO
+            import PIL.Image, io
             im = PIL.Image.fromstring('RGBA', tile.size(), data)
-            buffer = StringIO.StringIO()
+            buffer = io.StringIO()
             if self.paletted:
-                print >>sys.stderr, "Mapnik's 8-bit (png256) format not supported with PIL"
+                print("Mapnik's 8-bit (png256) format not supported with PIL", file=sys.stderr)
             im.save(buffer, self.extension)
             buffer.seek(0)
             tile.data = buffer.read()

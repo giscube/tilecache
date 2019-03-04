@@ -8,9 +8,9 @@ class WMS (Request):
     def parse (self, fields, path, host):
         param = {}
         for key in ['bbox', 'layers', 'request', 'version', 'height', 'width']: 
-            if fields.has_key(key.upper()):
+            if key.upper() in fields:
                 param[key] = fields[key.upper()] 
-            elif fields.has_key(key):
+            elif key in fields:
                 param[key] = fields[key]
             else:
                 param[key] = ""
@@ -20,7 +20,7 @@ class WMS (Request):
             return self.getMap(param)
 
     def getMap (self, param):
-        bbox  = map(float, param["bbox"].split(","))
+        bbox  = list(map(float, param["bbox"].split(",")))
         layers = param["layers"].split(",")
         height = min( 4096, int(param["height"]) )
         width  = min( 4096, int(param["width"]) )
@@ -69,9 +69,9 @@ class WMS (Request):
             description = ""
 
         formats = {}
-        for layer in self.service.layers.values():
+        for layer in list(self.service.layers.values()):
             formats[layer.format()] = 1
-        formats = formats.keys()
+        formats = list(formats.keys())
 
         xml = """<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
         <!DOCTYPE WMT_MS_Capabilities SYSTEM 
@@ -122,7 +122,7 @@ class WMS (Request):
               <Format>text/plain</Format>
             </Exception>
             <VendorSpecificCapabilities>"""
-        for name, layer in self.service.layers.items():
+        for name, layer in list(self.service.layers.items()):
             resolutions = " ".join(["%.20f" % r for r in layer.resolutions])
             xml += """
               <TileSet>
@@ -145,7 +145,7 @@ class WMS (Request):
                                       UserStyle="0" RemoteWFS="0"/>
             <Layer>
               <Title>TileCache Layers</Title>"""
-        for name, layer in self.service.layers.items():
+        for name, layer in list(self.service.layers.items()):
             xml += """
             <Layer queryable="0" opaque="0" cascaded="1">
               <Name>%s</Name>

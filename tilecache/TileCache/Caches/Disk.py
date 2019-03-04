@@ -23,7 +23,7 @@ class Disk (Cache):
             old_umask = os.umask(self.umask)
         try:
             os.makedirs(path)
-        except OSError, E:
+        except OSError as E:
             # os.makedirs can suffer a race condition because it doesn't check
             # that the directory  doesn't exist at each step, nor does it
             # catch errors. This lets 'directory exists' errors pass through,
@@ -64,7 +64,7 @@ class Disk (Cache):
             
             try:
                 mtime = os.stat(path).st_mtime
-            except Exception, E:
+            except Exception as E:
                 raise Exception( "isExpired %s %s\n", (path, E) )
                 return False
             
@@ -167,5 +167,5 @@ class Disk (Cache):
         name = self.getLockName(tile)
         try:
             os.rmdir(name)
-        except OSError, E:
-            print >>sys.stderr, "unlock %s failed: %s" % (name, str(E))
+        except OSError as E:
+            print("unlock %s failed: %s" % (name, str(E)), file=sys.stderr)

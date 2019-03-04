@@ -1,13 +1,13 @@
 from TileCache.Service import Service
 import TileCache.Layers
 
-import ConfigParser
+import configparser
 
 from pydoc import ispackage
 
 import os, inspect
 
-from StringIO import StringIO
+from io import StringIO
 
 from web_request.response import Response
 
@@ -24,7 +24,7 @@ def view(service, parts=None, tilecache_location = None, **kwargs):
     if not tilecache_location:
         return "No TileCache location is configured. Add tilecache_location to your config to use."
 
-    if not parts or (not service.layers.has_key(parts[0]) and parts[0] != "cache"):
+    if not parts or (parts[0] not in service.layers and parts[0] != "cache"):
         return "Error"
     else:
         layer = service.layers[parts[0]]
@@ -34,7 +34,7 @@ def view(service, parts=None, tilecache_location = None, **kwargs):
         return str(data)
 
 def edit(service, parts=None, additional_keys = None, **kwargs):
-    if not parts or (not service.layers.has_key(parts[0]) and parts[0] != "cache"):
+    if not parts or (parts[0] not in service.layers and parts[0] != "cache"):
         return "Error"
     else:
         layer = service.layers[parts[0]]
@@ -44,11 +44,11 @@ def edit(service, parts=None, additional_keys = None, **kwargs):
         return str(data)
 
 def save(service, parts=None, params = {}, **kwargs):
-    if not parts or (not service.layers.has_key(parts[0]) and parts[0] != "cache"):
+    if not parts or (parts[0] not in service.layers and parts[0] != "cache"):
         return "Error"
     else:
         name = params['name']
-        for key, value in params.items():
+        for key, value in list(params.items()):
             if key == "name": continue
             if value == "None" or value == "none" or value == "":
                 service.config.remove_option(name, key)
@@ -79,7 +79,7 @@ def find_packages(object):
 
 
 def new(service, parts=None, params = {}, **kwargs):
-    if params.has_key('submit'):
+    if 'submit' in params:
         name = params['name']
         type = params['type']
         
@@ -112,7 +112,7 @@ dispatch_urls = {
 
 def run(config_path = "config.cfg", path_info = None, **kwargs):
     global template_lookup
-    c = ConfigParser.ConfigParser()
+    c = configparser.ConfigParser()
     c.read(config_path)
 
     tc_path = c.get("config", "tilecache_config")
@@ -131,10 +131,10 @@ def run(config_path = "config.cfg", path_info = None, **kwargs):
     
     try:
         additional_metadata = [i[0] for i in c.items("properties")]
-    except ConfigParser.NoSectionError:
+    except configparser.NoSectionError:
         pass
 
-    if s.metadata.has_key('exception'):
+    if 'exception' in s.metadata:
         data = [
           "Current TileCache config is invalid.", 
           "Exception: %s" % s.metadata['exception'],
@@ -145,7 +145,7 @@ def run(config_path = "config.cfg", path_info = None, **kwargs):
     data = ""
     stripped = path_info.strip("/")
     stripped_split = stripped.split("/")
-    if dispatch_urls.has_key(stripped_split[0]):
+    if stripped_split[0] in dispatch_urls:
         data = dispatch_urls[stripped_split[0]](s, parts=stripped_split[1:], 
                                                 additional_keys = additional_metadata, 
                                                 tilecache_location = tilecache_location,

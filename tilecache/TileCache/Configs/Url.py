@@ -2,7 +2,7 @@
 
 # BSD Licensed, Copyright (c) 2006-2010 TileCache Contributors
 from TileCache.Config import Config
-import urllib2, traceback, sys, os, ConfigParser, csv, time
+import urllib.request, urllib.error, urllib.parse, traceback, sys, os, configparser, csv, time
 import TileCache.Cache, TileCache.Caches
 import TileCache.Layer, TileCache.Layers
 from TileCache.Service import TileCacheException
@@ -37,8 +37,8 @@ class Url(Config):
         
         config = None
         try:
-            config = ConfigParser.ConfigParser()
-            fp = urllib2.urlopen( self.resource )
+            config = configparser.ConfigParser()
+            fp = urllib.request.urlopen( self.resource )
             headers = dict(fp.info())
             config.readfp(fp)
             fp.close()
@@ -54,9 +54,9 @@ class Url(Config):
                                     "%a, %d %b %Y %H:%M:%S %Z" )
             self.last_mtime = time.mktime(mytime)
         
-        except Exception, E:
+        except Exception as E:
             self.metadata['exception'] = E
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
     
     ###########################################################################
     ##
@@ -69,9 +69,9 @@ class Url(Config):
     def checkchange (self, configs):
         
         try:
-            urllib2.Request(self.resource)
+            urllib.request.Request(self.resource)
             request.get_method = lambda : 'HEAD'
-            response = urllib2.urlopen(request)
+            response = urllib.request.urlopen(request)
             headers = dict(response.info())
             
             os.environ['TZ'] = 'UTC'

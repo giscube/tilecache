@@ -37,7 +37,7 @@ def clean_disk_cache (rootdir, max_size, max_entries):
        is megabytes). Up to max_entries will be removed per-run."""  
     heap, cache_size = walk_disk_cache(rootdir, max_entries)
     max_size <<= 20 # megabytes
-    print "Cache entries found: %d" % len(heap) 
+    print("Cache entries found: %d" % len(heap)) 
     removed_files = 0
     while heap and cache_size > max_size:
         atime, size, path = heapq.heappop(heap)
@@ -46,9 +46,9 @@ def clean_disk_cache (rootdir, max_size, max_entries):
         try:
             os.unlink(path)
             removed_files += 1
-        except OSError, e:
-            print >>sys.stderr, "Error removing tile %s: %s" % (path, e)
-    print "Removed %d files." % removed_files    
+        except OSError as e:
+            print("Error removing tile %s: %s" % (path, e), file=sys.stderr)
+    print("Removed %d files." % removed_files)    
 
 if __name__ == "__main__":
     

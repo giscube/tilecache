@@ -9,7 +9,7 @@ except:
     use_setuptools()
     from setuptools import setup
 
-readme = file('docs/README.txt','rb').read()
+readme = open('docs/README.txt', 'r', encoding='utf-8').read()
 
 classifiers = [
         'Development Status :: 4 - Beta',
@@ -23,14 +23,14 @@ classifiers = [
 
 # We'd like to let debian install the /etc/tilecache.cfg,
 # but put them in tilecache/tilecache.cfg using setuptools
-# otherwise. 
+# otherwise.
 extra = { }
 if "--debian" in sys.argv:
    extra['data_files']=[('/etc', ['tilecache.cfg']),('.',['dev.ini'])]
    sys.argv.remove("--debian")
 else:
    extra['data_files']=[('TileCache', ['tilecache.cfg']),('.',['dev.ini'])]
-    
+
 setup(name='TileCache',
       version='2.11',
       description='a web map tile caching system',
@@ -40,7 +40,7 @@ setup(name='TileCache',
       long_description=readme,
       packages=['TileCache', 'TileCache.Caches', 'TileCache.Services', 'TileCache.Layers', 'TileCache.Configs'],
       scripts=['tilecache.cgi', 'tilecache.fcgi', 'tilecache.wsgi',
-               'tilecache_seed.py', 'tilecache_install_config.py', 
+               'tilecache_seed.py', 'tilecache_install_config.py',
                'tilecache_clean.py', 'tilecache_http_server.py'],
       zip_safe=False,
       test_suite = 'tests.run_doc_tests',
@@ -50,5 +50,5 @@ setup(name='TileCache',
     [paste.app_factory]
         main = TileCache.Service:paste_deploy_app
  """,
-      **extra 
+      **extra
      )

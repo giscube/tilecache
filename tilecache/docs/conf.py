@@ -38,8 +38,8 @@ source_suffix = '.txt'
 master_doc = 'index'
 
 # General information about the project.
-project = u'TileCache'
-copyright = u'2008-2010, TileCache Project'
+project = 'TileCache'
+copyright = '2008-2010, TileCache Project'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -165,8 +165,8 @@ htmlhelp_basename = 'TileCachedoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
-  ('index', 'TileCache.tex', ur'TileCache Documentation',
-   ur'TileCache Project', 'manual'),
+  ('index', 'TileCache.tex', r'TileCache Documentation',
+   r'TileCache Project', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

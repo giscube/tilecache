@@ -2,8 +2,8 @@
 
 import os, sys, time
 from warnings import warn
-from Client import WMS
-from Service import TileCacheException
+from .Client import WMS
+from .Service import TileCacheException
 
 DEBUG = True
 
@@ -298,15 +298,15 @@ class Layer (object):
             units = "meters"
 
         if isinstance(bbox, str): 
-            bbox = map(float, bbox.split(","))
+            bbox = list(map(float, bbox.split(",")))
         self.bbox = bbox
         
         if isinstance(data_extent, str): 
-            data_extent = map(float, data_extent.split(","))
+            data_extent = list(map(float, data_extent.split(",")))
         self.data_extent = data_extent or bbox
         
         if isinstance(size, str): 
-            size = map(int, size.split(","))
+            size = list(map(int, size.split(",")))
         self.size = size
         
         self.units = units
@@ -331,7 +331,7 @@ class Layer (object):
         
         if resolutions:
             if isinstance(resolutions, str):
-                resolutions = map(float,resolutions.split(","))
+                resolutions = list(map(float,resolutions.split(",")))
             self.resolutions = resolutions
         else:
             maxRes = None
@@ -387,12 +387,13 @@ class Layer (object):
     ##        0.703125
     ############################################################################
     
-    def getResolution (self, (minx, miny, maxx, maxy)):
+    def getResolution (self, xxx_todo_changeme):
         """
         >>> l = Layer("name")
         >>> l.getResolution((-180,-90,0,90))
         0.703125
         """
+        (minx, miny, maxx, maxy) = xxx_todo_changeme
         return max( float(maxx - minx) / self.size[0],
                     float(maxy - miny) / self.size[1] )
 
@@ -414,7 +415,7 @@ class Layer (object):
     ############################################################################
     
     def getClosestLevel (self, res, size = [256, 256]):
-        diff = sys.maxint
+        diff = sys.maxsize
         z = None
         for i in range(len(self.resolutions)):
             if diff > abs( self.resolutions[i] - res ):
@@ -478,7 +479,7 @@ class Layer (object):
     ##        (3, 1, 2)
     ############################################################################
     
-    def getCell (self, (minx, miny, maxx, maxy), exact = True):
+    def getCell (self, xxx_todo_changeme1, exact = True):
         """
         Returns x, y, z
 
@@ -492,6 +493,7 @@ class Layer (object):
         >>> l.getCell((-45.,-45.,0.,0.))
         (3, 1, 2)
         """
+        (minx, miny, maxx, maxy) = xxx_todo_changeme1
         res = self.getResolution((minx, miny, maxx, maxy))
         x = y = None
 
@@ -538,12 +540,13 @@ class Layer (object):
     ##        (6, 2, 2)
     ############################################################################
     
-    def getClosestCell (self, z, (minx, miny)):
+    def getClosestCell (self, z, xxx_todo_changeme2):
         """
         >>> l = Layer("name")
         >>> l.getClosestCell(2, (84, 17))
         (6, 2, 2)
         """
+        (minx, miny) = xxx_todo_changeme2
         res = self.resolutions[z]
         maxx = minx + self.size[0] * res
         maxy = miny + self.size[1] * res
@@ -592,7 +595,7 @@ class Layer (object):
     ##        False
     ############################################################################
     
-    def contains (self, (x, y), res = 0):
+    def contains (self, xxx_todo_changeme3, res = 0):
         """
         >>> l = Layer("name")
         >>> l.contains((0,0))
@@ -600,6 +603,7 @@ class Layer (object):
         >>> l.contains((185, 94))
         False
         """
+        (x, y) = xxx_todo_changeme3
         diff_x1 = abs(x - self.bbox[0])
         diff_x2 = abs(x - self.bbox[2])
         diff_y1 = abs(y - self.bbox[1]) 
@@ -739,9 +743,9 @@ class MetaLayer (Layer):
         self.metaTile    = metatile
         
         if isinstance(metasize, str):
-            metasize = map(int,metasize.split(","))
+            metasize = list(map(int,metasize.split(",")))
         if isinstance(metabuffer, str):
-            metabuffer = map(int, metabuffer.split(","))
+            metabuffer = list(map(int, metabuffer.split(",")))
             if len(metabuffer) == 1:
                 metabuffer = (metabuffer[0], metabuffer[0])
         self.metaSize    = metasize
@@ -779,11 +783,11 @@ class MetaLayer (Layer):
     ############################################################################
     
     def renderMetaTile (self, metatile, tile):
-        import StringIO
+        import io
         from PIL import Image
 
         data = self.renderTile(metatile)
-        image = Image.open( StringIO.StringIO(data) )
+        image = Image.open( io.BytesIO(data) )
 
         metaCols, metaRows = self.getMetaSize(metatile.z)
         metaHeight = metaRows * self.size[1] + 2 * self.metaBuffer[1]
@@ -795,8 +799,8 @@ class MetaLayer (Layer):
                 maxy = metaHeight - (j * self.size[1] + self.metaBuffer[1])
                 miny = maxy - self.size[1]
                 subimage = image.crop((minx, miny, maxx, maxy))
-                buffer = StringIO.StringIO()
-                if image.info.has_key('transparency'): 
+                buffer = io.BytesIO()
+                if 'transparency' in image.info: 
                     subimage.save(buffer, self.extension, transparency=image.info['transparency'])
                 else:
                     subimage.save(buffer, self.extension)
@@ -841,9 +845,9 @@ class MetaLayer (Layer):
     ############################################################################
     
     def watermark (self, img):
-        import StringIO
+        import io
         from PIL import Image, ImageEnhance
-        tileImage = Image.open( StringIO.StringIO(img) )
+        tileImage = Image.open( io.StringIO(img) )
         wmark = Image.open(self.watermarkimage)
         assert self.watermarkopacity >= 0 and self.watermarkopacity <= 1
         if wmark.mode != 'RGBA':
@@ -858,8 +862,8 @@ class MetaLayer (Layer):
         watermarkedImage = Image.new('RGBA', tileImage.size, (0,0,0,0))
         watermarkedImage.paste(wmark, (0,0))
         watermarkedImage = Image.composite(watermarkedImage, tileImage, watermarkedImage)
-        buffer = StringIO.StringIO()
-        if watermarkedImage.info.has_key('transparency'):
+        buffer = io.StringIO()
+        if 'transparency' in watermarkedImage.info:
             watermarkedImage.save(buffer, self.extension, transparency=compositeImage.info['transparency'])
         else:
             watermarkedImage.save(buffer, self.extension)

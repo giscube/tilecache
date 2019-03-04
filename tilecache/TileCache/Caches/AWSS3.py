@@ -10,13 +10,13 @@ class AWSS3(Cache):
             import boto.s3
             self.s3 = boto.s3
             self.module = "boto"
-        except ImportError, E:
+        except ImportError as E:
             exceptions = [str(E)]
             try:
-                import S3
+                from . import S3
                 self.s3 = S3
                 self.module = "amazon"
-            except Exception, E:
+            except Exception as E:
                 exceptions.append(str(E))
                 raise Exception(self.import_error % ('\n * '.join(exceptions)))
         Cache.__init__(self, **kwargs)
@@ -107,11 +107,10 @@ class AWSS3(Cache):
     
     def keys (self, options = {}):
         if self.module == "amazon":
-            return map(lambda x: x.key, 
-                self.cache.list_bucket(self.bucket_name, options).entries)
+            return [x.key for x in self.cache.list_bucket(self.bucket_name, options).entries]
         else:
             prefix = "" 
-            if options.has_key('prefix'):
+            if 'prefix' in options:
                 prefix = options['prefix']
             response = self.bucket.list(prefix=prefix)
             keys = []
@@ -152,17 +151,17 @@ if __name__ == "__main__":
     a = AWSS3(options.key, 
               options.secret)
     if args[0] == "list_locks":           
-        print ','.join(a.keys({'prefix':'lock-'}))
+        print(','.join(a.keys({'prefix':'lock-'})))
     elif args[0] == "list_keys":
-        print ','.join(a.keys())
+        print(','.join(list(a.keys())))
     elif args[0] == "count_tiles" or args[0] == "show_tiles":
         opts = { 
             'prefix': create_prefix(options)
         }
         if args[0] == "show_tiles":
-            print ",".join(a.keys(opts))
+            print(",".join(a.keys(opts)))
         else:
-            print len(a.keys(opts))
+            print(len(a.keys(opts)))
     elif args[0] == "delete":
         for key in args[1].split(","):
             a.deleteObject(key)
@@ -171,7 +170,7 @@ if __name__ == "__main__":
             'prefix': create_prefix(options)
         }
         keys = a.keys(opts)
-        val = raw_input("Are you sure you want to delete %s tiles? (y/n) " % len(keys))
+        val = input("Are you sure you want to delete %s tiles? (y/n) " % len(keys))
         if val.lower() in ['y', 'yes']:
             for key in keys:
                 a.deleteObject(key)

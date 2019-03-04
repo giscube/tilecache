@@ -4,11 +4,11 @@
 
 class TileCacheException(Exception): pass
 
-import sys, cgi, time, os, traceback, email, ConfigParser
-import Cache, Caches, Config, Configs
-import Layer, Layers
-import urllib2, csv
-from Configs.File import File
+import sys, cgi, time, os, traceback, email, configparser
+from . import Cache, Caches, Config, Configs
+from . import Layer, Layers
+import urllib.request, urllib.error, urllib.parse, csv
+from .Configs.File import File
 import threading
 
 # Windows doesn't always do the 'working directory' check correctly.
@@ -34,7 +34,7 @@ class Request (object):
         try:
             return self.service.layers[layername]
         except:
-            raise TileCacheException("The requested layer (%s) does not exist. Available layers are: \n * %s" % (layername, "\n * ".join(self.service.layers.keys()))) 
+            raise TileCacheException("The requested layer (%s) does not exist. Available layers are: \n * %s" % (layername, "\n * ".join(list(self.service.layers.keys())))) 
 
 def import_module(name):
     """Helper module to import any module based on a name, and return the module."""
@@ -69,7 +69,7 @@ class Service (object):
         configs = []
         initconfigs = []
 
-        print >> sys.stderr, "Loading Configs: %s" % (','.join(files),)
+        print("Loading Configs: %s" % (','.join(files),), file=sys.stderr)
         for f in files:
             #sys.stderr.write( "_load f %s\n" % f )
             cfg = File(f)
@@ -239,7 +239,7 @@ class Service (object):
   "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
 <cross-domain-policy>
         """]
-        if self.metadata.has_key('crossdomain_sites'):
+        if 'crossdomain_sites' in self.metadata:
             sites = self.metadata['crossdomain_sites'].split(',')
             for site in sites:
                 xml.append('  <allow-access-from domain="%s" />' % site)
@@ -293,9 +293,9 @@ class Service (object):
         ##### check for warnings and exceptions  #####
         
         for conf in self.configs:
-            if conf.metadata.has_key('exception'):
+            if 'exception' in conf.metadata:
                 raise TileCacheException("%s\n%s" % (conf.metadata['exception'], conf.metadata['traceback']))
-            elif conf.metadata.has_key('warn'):
+            elif 'warn' in conf.metadata:
                 sys.stderr.write("%s\n%s" % (conf.metadata['warn'], conf.metadata['traceback']))
         
         if path_info.find("crossdomain.xml") != -1:
@@ -305,29 +305,29 @@ class Service (object):
             from TileCache.Services.KML import KML 
             return KML(self).parse(params, path_info, host)
         
-        if params.has_key("scale") or params.has_key("SCALE"): 
+        if "scale" in params or "SCALE" in params: 
             from TileCache.Services.WMTS import WMTS
             tile = WMTS(self).parse(params, path_info, host)
-        elif params.has_key("service") or params.has_key("SERVICE") or \
-           params.has_key("REQUEST") and params['REQUEST'] == "GetMap" or \
-           params.has_key("request") and params['request'] == "GetMap": 
+        elif "service" in params or "SERVICE" in params or \
+           "REQUEST" in params and params['REQUEST'] == "GetMap" or \
+           "request" in params and params['request'] == "GetMap": 
             from TileCache.Services.WMS import WMS
             tile = WMS(self).parse(params, path_info, host)
-        elif params.has_key("L") or params.has_key("l") or \
-             params.has_key("request") and params['request'] == "metadata":
+        elif "L" in params or "l" in params or \
+             "request" in params and params['request'] == "metadata":
             from TileCache.Services.WorldWind import WorldWind
             tile = WorldWind(self).parse(params, path_info, host)
-        elif params.has_key("interface"):
+        elif "interface" in params:
             from TileCache.Services.TileService import TileService
             tile = TileService(self).parse(params, path_info, host)
-        elif params.has_key("v") and \
+        elif "v" in params and \
              (params['v'] == "mgm" or params['v'] == "mgmaps"):
             from TileCache.Services.MGMaps import MGMaps 
             tile = MGMaps(self).parse(params, path_info, host)
-        elif params.has_key("tile"):
+        elif "tile" in params:
             from TileCache.Services.VETMS import VETMS 
             tile = VETMS(self).parse(params, path_info, host)
-        elif params.has_key("format") and params['format'].lower() == "json":
+        elif "format" in params and params['format'].lower() == "json":
             from TileCache.Services.JSON import JSON 
             return JSON(self).parse(params, path_info, host)
         else:
@@ -353,7 +353,7 @@ class Service (object):
                 self.expireTile(tile)
                 return ('text/plain', 'OK')
             else:
-                return self.renderTile(tile, params.has_key('FORCE'))
+                return self.renderTile(tile, 'FORCE' in params)
         
         ##### list of tile objects #####
         
@@ -367,9 +367,9 @@ class Service (object):
                 except ImportError:
                     raise Exception("Combining multiple layers requires Python Imaging Library.")
                 try:
-                    import cStringIO as StringIO
+                    import io as StringIO
                 except ImportError:
-                    import StringIO
+                    import io
                 
                 
                 ##### calc image size #####
@@ -420,19 +420,19 @@ class Service (object):
                         elif t.y > prev.y:
                             yoff -= yincr
 
-                    (format, data) = self.renderTile(t, params.has_key('FORCE'))
-                    image = Image.open(StringIO.StringIO(data))
+                    (format, data) = self.renderTile(t, 'FORCE' in params)
+                    image = Image.open(io.StringIO(data))
                     if not result:
                         result = Image.new(image.mode, (xmax, ymax))
                         imformat = image.format
                     
                     try:
                         result.paste(image, (xoff, yoff) , image)
-                    except Exception, E:
+                    except Exception as E:
                         raise Exception("Could not combine images: Is it possible that some layers are not \n8-bit transparent images? \n(Error was: %s)" % E) 
                     prev=t
 
-                buffer = StringIO.StringIO()
+                buffer = io.StringIO()
                 result.save(buffer, imformat)
                 buffer.seek(0)
 
@@ -447,7 +447,7 @@ class Service (object):
 def modPythonHandler (apacheReq, service):
     from mod_python import apache, util
     try:
-        if apacheReq.headers_in.has_key("X-Forwarded-Host"):
+        if "X-Forwarded-Host" in apacheReq.headers_in:
             host = "http://" + apacheReq.headers_in["X-Forwarded-Host"]
         else:
             host = "http://" + apacheReq.headers_in["Host"]
@@ -477,18 +477,18 @@ def modPythonHandler (apacheReq, service):
             apacheReq.write("")
         else: 
             apacheReq.write(image)
-    except TileCacheException, E:
+    except TileCacheException as E:
         apacheReq.content_type = "text/plain"
         apacheReq.status = apache.HTTP_NOT_FOUND
         apacheReq.send_http_header()
         apacheReq.write("An error occurred: %s\n" % (str(E)))
-    except Exception, E:
+    except Exception as E:
         apacheReq.content_type = "text/plain"
         apacheReq.status = apache.HTTP_INTERNAL_SERVER_ERROR
         apacheReq.send_http_header()
         apacheReq.write("An error occurred: %s\n%s\n" % (
             str(E), 
-            "".join(traceback.format_tb(sys.exc_traceback))))
+            "".join(traceback.format_tb(sys.exc_info()[2]))))
     return apache.OK
 
 def wsgiHandler (environ, start_response, service):
@@ -527,21 +527,21 @@ def wsgiHandler (environ, start_response, service):
         else:
             return [image]
 
-    except TileCacheException, E:
+    except TileCacheException as E:
         start_response("404 Tile Not Found", [('Content-Type','text/plain')])
         return ["An error occurred: %s" % (str(E))]
-    except Exception, E:
+    except Exception as E:
         start_response("500 Internal Server Error", [('Content-Type','text/plain')])
         return ["An error occurred: %s\n%s\n" % (
             str(E), 
-            "".join(traceback.format_tb(sys.exc_traceback)))]
+            "".join(traceback.format_tb(sys.exc_info()[2])))]
 
 
 def cgiHandler (service):
     try:
         params = {}
         input = cgi.FieldStorage()
-        for key in input.keys(): params[key] = input[key].value
+        for key in list(input.keys()): params[key] = input[key].value
         path_info = host = ""
 
         if "PATH_INFO" in os.environ: 
@@ -560,37 +560,37 @@ def cgiHandler (service):
         service.checkchange()
         
         format, image = service.dispatchRequest( params, path_info, req_method, host )
-        print "Content-type: %s" % format
+        print("Content-type: %s" % format)
         if format.startswith("image/"):
             if service.cache.sendfile:
-                print "X-SendFile: %s" % image
+                print("X-SendFile: %s" % image)
             if service.cache.expire:
-                print "Expires: %s" % email.Utils.formatdate(time.time() + service.cache.expire, False, True)
-        print ""
+                print("Expires: %s" % email.Utils.formatdate(time.time() + service.cache.expire, False, True))
+        print("")
         if (not service.cache.sendfile) or (not format.startswith("image/")):
             if sys.platform == "win32":
                 binaryPrint(image)
             else:    
-                print image
-    except TileCacheException, E:
-        print "Cache-Control: max-age=10, must-revalidate" # make the client reload        
-        print "Content-type: text/plain\n"
-        print "An error occurred: %s\n" % (str(E))
-    except Exception, E:
-        print "Cache-Control: max-age=10, must-revalidate" # make the client reload        
-        print "Content-type: text/plain\n"
-        print "An error occurred: %s\n%s\n" % (
+                print(image)
+    except TileCacheException as E:
+        print("Cache-Control: max-age=10, must-revalidate") # make the client reload        
+        print("Content-type: text/plain\n")
+        print("An error occurred: %s\n" % (str(E)))
+    except Exception as E:
+        print("Cache-Control: max-age=10, must-revalidate") # make the client reload        
+        print("Content-type: text/plain\n")
+        print("An error occurred: %s\n%s\n" % (
             str(E), 
-            "".join(traceback.format_tb(sys.exc_traceback)))
+            "".join(traceback.format_tb(sys.exc_info()[2]))))
 
 theService = {}
 lastRead = {}
 def handler (apacheReq):
     global theService, lastRead
     options = apacheReq.get_options()
-    print options
+    print(options)
     fileChanged = False
-    if options.has_key("TileCacheConfig"):
+    if "TileCacheConfig" in options:
         configFile = options["TileCacheConfig"]
         lastRead[configFile] = time.time()
         
@@ -605,7 +605,7 @@ def handler (apacheReq):
     else:
         configFile = 'default'
         
-    if not theService.has_key(configFile) or fileChanged:
+    if configFile not in theService or fileChanged:
         theService[configFile] = Service.load(cfgfiles)
         
     return modPythonHandler(apacheReq, theService[configFile])

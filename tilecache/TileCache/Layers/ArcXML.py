@@ -7,7 +7,7 @@ ArcXML support. This layer will make requests to an ArcIMS server.
 from TileCache.Layer import MetaLayer
 from TileCache.Service import TileCacheException
 
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import xml.dom.minidom as m
 
 class ArcXML(MetaLayer):
@@ -109,14 +109,14 @@ class ArcXML(MetaLayer):
     def renderTile(self, tile):
         xml = self.gen_xml(tile)
         try:
-            xmldata = urllib.urlopen(self.url, xml).read()
-        except Exception, error:
+            xmldata = urllib.request.urlopen(self.url, xml).read()
+        except Exception as error:
             raise TileCacheException("Error fetching URL. Exception was: %s\n Input XML:\n %s " % (error, xml))
             
         try:
             doc = m.parseString(xmldata)
             img_url = doc.getElementsByTagName("OUTPUT")[0].attributes['url'].value
-        except Exception, error:
+        except Exception as error:
             raise TileCacheException("Error fetching URL. Exception was: %s\n Output XML: \n%s\n\nInput XML:\n %s " % (error, xmldata, xml))
-        tile.data = urllib.urlopen(img_url).read()
+        tile.data = urllib.request.urlopen(img_url).read()
         return tile.data 

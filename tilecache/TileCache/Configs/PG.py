@@ -57,28 +57,28 @@ class PG(Config):
         
         dsndict = {}
         
-        for item in csv.reader([resource], delimiter=' ', quotechar="'").next():
-            ldict = csv.reader([item], delimiter='=', quotechar="'").next()
+        for item in next(csv.reader([resource], delimiter=' ', quotechar="'")):
+            ldict = next(csv.reader([item], delimiter='=', quotechar="'"))
             dsndict[ldict[0]] = ldict[1]
         
-        if not dsndict.has_key('database') or dsndict['database'] == None or dsndict['database'] == "":
+        if 'database' not in dsndict or dsndict['database'] == None or dsndict['database'] == "":
             self.metadata['warn'] = "error: must have database specified\n"
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
             return None
         
-        if not dsndict.has_key('tname') or dsndict['tname'] == None or dsndict['tname'] == "":
+        if 'tname' not in dsndict or dsndict['tname'] == None or dsndict['tname'] == "":
             self.metadata['warn'] = "error: must have table name specified\n"
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
             return None
         
         self.dsn = { 'database': dsndict['database'] }
-        if dsndict.has_key('host'):
+        if 'host' in dsndict:
             self.dsn['host'] = dsndict['host']
-        if dsndict.has_key('port'):
+        if 'port' in dsndict:
             self.dsn['port'] = dsndict['port']
-        if dsndict.has_key('user'):
+        if 'user' in dsndict:
             self.dsn['user'] = dsndict['user']
-        if dsndict.has_key('password'):
+        if 'password' in dsndict:
             self.dsn['password'] = dsndict['password']
         
         self.tname = dsndict['tname'];
@@ -119,7 +119,7 @@ class PG(Config):
             try:
                 self.conn = psycopg2.connect(**self.dsn)
                 break
-            except psycopg2.DatabaseError, e:
+            except psycopg2.DatabaseError as e:
                 time.sleep(1)
         
         return True
@@ -159,9 +159,9 @@ class PG(Config):
                 self.conn.commit()
             cur.close()
             
-        except Exception, E:
+        except Exception as E:
             self.metadata['warn'] = E
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
             if self.pgversion.major >= 9:
                 self.conn.rollback()
                 return False
@@ -250,9 +250,9 @@ SELECT current_setting('server_version')::text;
             
             return version[0]
         
-        except Exception, E:
+        except Exception as E:
             self.metadata['warn'] = E
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
             return "0.0.0"
         
     ###########################################################################
@@ -435,9 +435,9 @@ LISTEN "%s_update";
             if self.pgversion.major < 9:
                 self.conn.commit();
             
-        except Exception, E:
+        except Exception as E:
             self.metadata['warn'] = E
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
             if self.pgversion.major < 9:
                self.conn.rollback()
     
@@ -452,9 +452,9 @@ LISTEN "%s_update";
         try:
             cur.close()
             
-        except Exception, E:
+        except Exception as E:
             self.metadata['warn'] = E
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
         
         sql = '''
 UNLISTEN %s_insert;
@@ -575,9 +575,9 @@ WHERE name = '%s';
                 self.conn.commit()
             cur.close()
             
-        except Exception, E:
+        except Exception as E:
             self.metadata['warn'] = E
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
         
         if reload == None:
             self.start_listen()
@@ -663,7 +663,7 @@ WHERE name = '%s';
     
     def update (self, objargs ):
         
-        if not objargs.has_key('name'):
+        if 'name' not in objargs:
             return False
         
         sublist = []
@@ -694,9 +694,9 @@ SET (
                   self.conn.commit()
             cur.close()
 
-        except Exception, E:
+        except Exception as E:
             self.metadata['exception'] = E
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
             return False
         
         return True
@@ -716,7 +716,7 @@ SET (
         
     def add (self, objargs ):
         
-        if not objargs.has_key('name'):
+        if 'name' not in objargs:
             return False
 
         sublist = []
@@ -756,9 +756,9 @@ VALUES (
                   self.conn.commit()
             cur.close()
             
-        except Exception, E:
+        except Exception as E:
             self.metadata['warn'] = E
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
             return False
         
         return True
@@ -788,7 +788,7 @@ VALUES (
                     
             ##### if the connection errors out return false #####
 
-        except psycopg2.DatabaseError, e:
+        except psycopg2.DatabaseError as e:
             return False
 
         return True
@@ -874,9 +874,9 @@ VALUES (
                 
                 return True            
 
-        except Exception, E:
+        except Exception as E:
             self.metadata['warn'] = E
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
         
         return False
 

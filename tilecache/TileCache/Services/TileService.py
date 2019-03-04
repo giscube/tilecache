@@ -8,9 +8,9 @@ class TileService (Request):
         param = {}
 
         for key in ['interface', 'version', 'dataset', 'level', 'x', 'y', 'request']: 
-            if fields.has_key(key.upper()):
+            if key.upper() in fields:
                 param[key] = fields[key.upper()] 
-            elif fields.has_key(key):
+            elif key in fields:
                 param[key] = fields[key]
             else:
                 param[key] = ""

@@ -26,7 +26,7 @@ class Cache (object):
 
         self.sendfile = sendfile and sendfile.lower() in ["yes", "y", "t", "true"]
         if expire != False:
-            self.expire = long(expire)
+            self.expire = int(expire)
                 
     def lock (self, tile, blocking = True):
         start_time = time.time()

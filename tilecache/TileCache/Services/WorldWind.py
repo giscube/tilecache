@@ -8,9 +8,9 @@ class WorldWind (Request):
         param = {}
 
         for key in ['t', 'l', 'x', 'y', 'request']: 
-            if fields.has_key(key.upper()):
+            if key.upper() in fields:
                 param[key] = fields[key.upper()] 
-            elif fields.has_key(key):
+            elif key in fields:
                 param[key] = fields[key]
             else:
                 param[key] = ""
@@ -38,14 +38,14 @@ class WorldWind (Request):
             description = ""
 
         formats = {}
-        for layer in self.service.layers.values():
+        for layer in list(self.service.layers.values()):
             formats[layer.format()] = 1
-        formats = formats.keys()
+        formats = list(formats.keys())
         xml = """<?xml version="1.0" encoding="UTF-8" ?>
             <LayerSet Name="TileCache" ShowAtStartup="true" ShowOnlyOneLayers="false"> 
             """
 
-        for name, layer in self.service.layers.items():
+        for name, layer in list(self.service.layers.items()):
             if (layer.srs != "EPSG:4326"): continue
             xml += """
                 <ChildLayerSet Name="%s" ShowAtStartup="false" ShowOnlyOneLayer="true">

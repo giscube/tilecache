@@ -2,7 +2,7 @@
 
 # BSD Licensed, Copyright (c) 2006-2010 TileCache Contributors
 from TileCache.Config import Config
-import traceback, sys, os, ConfigParser, csv
+import traceback, sys, os, configparser, csv
 import TileCache.Cache, TileCache.Caches
 import TileCache.Layer, TileCache.Layers
 from TileCache.Service import TileCacheException
@@ -52,15 +52,15 @@ class File (Config):
         try:
             mtime = os.stat(self.resource)[8]
             self.last_mtime = mtime
-        except Exception, E:
+        except Exception as E:
             self.metadata['warn'] = E
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
             
             return None        
         
         config = None
         try:
-            config = ConfigParser.ConfigParser()
+            config = configparser.ConfigParser()
             config.read(self.resource)
             
             if reload == False:
@@ -77,9 +77,9 @@ class File (Config):
             
             self._loadSections (config, configs, reload, cache = self.cache)
             
-        except Exception, E:
+        except Exception as E:
             self.metadata['exception'] = E
-            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_traceback))
+            self.metadata['traceback'] = "".join(traceback.format_tb(sys.exc_info()[2]))
     
     ###########################################################################
     ##
@@ -95,7 +95,7 @@ class File (Config):
         if name != None:
             
             try:
-                config = ConfigParser.ConfigParser()
+                config = configparser.ConfigParser()
                 config.read(self.resource)
                 
                 if config.has_section(name):
@@ -104,7 +104,7 @@ class File (Config):
                     config.write(self.resource)
                     return True
             except:
-                raise Exception("Delete failed.\n".join(traceback.format_tb(sys.exc_traceback)))
+                raise Exception("Delete failed.\n".join(traceback.format_tb(sys.exc_info()[2])))
         
         return False
                     
@@ -155,10 +155,10 @@ class File (Config):
         
     def add (self, objargs ):
         
-        if objargs.has_key('name'):
+        if 'name' in objargs:
             name = objargs[name]
             try:
-                config = ConfigParser.ConfigParser()
+                config = configparser.ConfigParser()
                 config.read(self.resource)
                 
                 if config.has_section(name):
@@ -172,7 +172,7 @@ class File (Config):
                 config.write(self.resource)
                 return True
             except:
-                raise Exception("Add failed.\n".join(traceback.format_tb(sys.exc_traceback)))
+                raise Exception("Add failed.\n".join(traceback.format_tb(sys.exc_info()[2])))
         return False
     
     ###########################################################################

@@ -4,9 +4,9 @@ import struct, time
 from sha import sha
 from bisect import bisect_left
 
-from Layer import Layer, Tile
-from Client import WMS
-from Service import Service
+from .Layer import Layer, Tile
+from .Client import WMS
+from .Service import Service
 
 class Message (object):
     types           = ("PING", "PONG", "GET", "PUT", "DELETE")
@@ -53,8 +53,7 @@ class Message (object):
         self.box   = (minrow, mincol, maxrow, maxcol)
 
     def freeze (self):
-        msgtype, name = filter( lambda x: x[1] == self.type, 
-                                enumerate(self.types) )[0]
+        msgtype, name = [x for x in enumerate(self.types) if x[1] == self.type][0]
         msgtxt      = struct.pack( self.header,
                                    self.key, self.seq_id, msgtype, 0 )
         dispatch    = getattr(self, "freeze_" + self.type)
@@ -85,7 +84,7 @@ class Peer (object):
         self.address = address
         self.key     = key
         self.weight  = float(weight)
-        self.seq_id  = 0L
+        self.seq_id  = 0
         self.timeout = self.min_timeout
 
 class Client (Peer):
@@ -94,7 +93,7 @@ class Client (Peer):
 
     def __init__ (self, service = None, **kwargs):
         Peer.__init__(self, **kwargs)
-        self.seq_id     = long( time.time() )
+        self.seq_id     = int( time.time() )
         self.ring       = []
         self.peers      = {}
         self.requests   = {}
@@ -148,7 +147,7 @@ class Client (Peer):
         self.set_peers(directory)
 
     def set_peers (self, peers):
-        new_peers = dict(map(lambda p: (p.key, p), peers))
+        new_peers = dict([(p.key, p) for p in peers])
 
         for key, peer in new_peers:
             if key in self.peers:           # already have it
@@ -164,7 +163,7 @@ class Client (Peer):
 
     def rebalance_peers (self):
         ring    = []
-        peers   = self.peers.values()
+        peers   = list(self.peers.values())
         total_weight = sum([p.weight for p in peers]) + 1.0
         for peer in peers:
             normal_weight = peer.weight / total_weight * self.max_ring_inserts
@@ -215,7 +214,8 @@ class Client (Peer):
         peer = self.peers[ping.key]
         self.send( peer, msg )
 
-    def handle (self, thunk, (host, port)):
+    def handle (self, thunk, xxx_todo_changeme):
+        (host, port) = xxx_todo_changeme
         msg = Message.thaw(thunk, self.config.layers)
         peer = self.peers[msg.key]
         # validate originating host/port here

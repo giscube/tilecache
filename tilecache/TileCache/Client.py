@@ -2,9 +2,9 @@
 
 # BSD Licensed, Copyright (c) 2006-2010 TileCache Contributors
 
-import sys, urllib, urllib2, time, os, math
+import sys, urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse, time, os, math
 import time
-import httplib
+import http.client
 try:
     from optparse import OptionParser
 except ImportError:
@@ -29,28 +29,28 @@ class WMS (object):
 
         self.params  = {}
         if user is not None and password is not None:
-           x = urllib2.HTTPPasswordMgrWithDefaultRealm()
+           x = urllib.request.HTTPPasswordMgrWithDefaultRealm()
            x.add_password(None, base, user, password)
-           self.client  = urllib2.build_opener()
-           auth = urllib2.HTTPBasicAuthHandler(x)
-           self.client  = urllib2.build_opener(auth)
+           self.client  = urllib.request.build_opener()
+           auth = urllib.request.HTTPBasicAuthHandler(x)
+           self.client  = urllib.request.build_opener(auth)
         else:
-           self.client  = urllib2.build_opener()
+           self.client  = urllib.request.build_opener()
 
-        for key, val in self.defaultParams.items():
+        for key, val in list(self.defaultParams.items()):
             if self.base.lower().rfind("%s=" % key.lower()) == -1:
                 self.params[key] = val
         for key in self.fields:
-            if params.has_key(key):
+            if key in params:
                 self.params[key] = params[key]
             elif self.base.lower().rfind("%s=" % key.lower()) == -1:
                 self.params[key] = ""
 
     def url (self):
-        return self.base + urllib.urlencode(self.params)
+        return self.base + urllib.parse.urlencode(self.params)
 
     def fetch (self):
-        urlrequest = urllib2.Request(self.url())
+        urlrequest = urllib.request.Request(self.url())
         # urlrequest.add_header("User-Agent",
         #    "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)" )
         response = None
@@ -60,14 +60,14 @@ class WMS (object):
                 data = response.read()
                 # check to make sure that we have an image...
                 msg = response.info()
-                if msg.has_key("Content-Type"):
+                if "Content-Type" in msg:
                     ctype = msg['Content-Type']
                     if ctype[:5].lower() != 'image':
                         if HIDE_ALL:
                             raise Exception("Did not get image data back. (Adjust HIDE_ALL for more detail.)")
                         else:
                             raise Exception("Did not get image data back. \nURL: %s\nContent-Type Header: %s\nResponse: \n%s" % (self.url(), ctype, data))
-            except httplib.BadStatusLine:
+            except http.client.BadStatusLine:
                 response = None # try again
         return data, response
 
@@ -75,7 +75,7 @@ class WMS (object):
         self.params["bbox"] = ",".join(map(str, box))
 
 def seed (svc, layer, levels = (0, 5), bbox = None, padding = 0, force = False, reverse = False, delay = 0 ):
-    from Layer import Tile
+    from .Layer import Tile
     try:
         padding = int(padding)
     except:
@@ -92,7 +92,7 @@ def seed (svc, layer, levels = (0, 5), bbox = None, padding = 0, force = False, 
         # Why Are we printing to sys.stderr??? It's not an error.
         # This causes a termination if run from cron or in background if shell is terminated
         #print >>sys.stderr, "###### %s, %s" % (bottomleft, topright)
-        print "###### %s, %s" % (bottomleft, topright)
+        print("###### %s, %s" % (bottomleft, topright))
         zcount = 0
         metaSize = layer.getMetaSize(z)
         ztiles = int(math.ceil(float(topright[1] - bottomleft[1]) / metaSize[0]) * math.ceil(float(topright[0] - bottomleft[0]) / metaSize[1]))
@@ -125,8 +125,8 @@ def seed (svc, layer, levels = (0, 5), bbox = None, padding = 0, force = False, 
                 total += 1
                 zcount += 1
                 box = "(%.4f %.4f %.4f %.4f)" % bounds
-                print "%02d (%06d, %06d) = %s [%.4fs : %.3f/s] %s/%s" \
-                     % (z,x,y, box, time.time() - tileStart, total / (time.time() - start + .0001), zcount, ztiles)
+                print("%02d (%06d, %06d) = %s [%.4fs : %.3f/s] %s/%s" \
+                     % (z,x,y, box, time.time() - tileStart, total / (time.time() - start + .0001), zcount, ztiles))
                 if delay:
                     time.sleep(delay)
 
@@ -159,12 +159,12 @@ def main ():
     if len(args)>3:
         parser.error("Incorrect number of arguments. bbox and padding are now options (-b and -p)")
 
-    from Service import Service, cfgfiles
-    from Layer import Layer
+    from .Service import Service, cfgfiles
+    from .Layer import Layer
     cfgs = cfgfiles
     if options.tilecacheconfig:
         configFile = options.tilecacheconfig
-        print "Config file set to %s" % (configFile)
+        print("Config file set to %s" % (configFile))
         cfgs = cfgs + [configFile]
 
     svc = Service.load(cfgs)
@@ -172,18 +172,18 @@ def main ():
     layer = svc.layers[args[0]]
 
     if options.bbox:
-        bboxlist = map(float,options.bbox.split(","))
+        bboxlist = list(map(float,options.bbox.split(",")))
     else:
         bboxlist=None
 
 
     if len(args)>1:
-        seed(svc, layer, map(int, args[1:3]), bboxlist , padding=options.padding, force = options.force, reverse = options.reverse, delay=options.delay)
+        seed(svc, layer, list(map(int, args[1:3])), bboxlist , padding=options.padding, force = options.force, reverse = options.reverse, delay=options.delay)
     else:
         for line in sys.stdin.readlines():
-            lat, lon, delta = map(float, line.split(","))
+            lat, lon, delta = list(map(float, line.split(",")))
             bbox = (lon - delta, lat - delta, lon + delta, lat + delta)
-            print "===> %s <===" % (bbox,)
+            print("===> %s <===" % (bbox,))
             seed(svc, layer, (5, 17), bbox , force = options.force )
 
 if __name__ == '__main__':

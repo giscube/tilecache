@@ -2,7 +2,7 @@
 
 # BSD Licensed, Copyright (c) 2006-2010 TileCache Contributors
 
-import urllib2, traceback, sys, os, ConfigParser, csv, time
+import urllib.request, urllib.error, urllib.parse, traceback, sys, os, configparser, csv, time
 import TileCache.Layer, TileCache.Layers
 import TileCache.Cache, TileCache.Caches
 import threading
@@ -60,11 +60,11 @@ class Config (object):
 
     def getLayers(self):
         if not self.isMemcache():
-            return self.layers.keys()
+            return list(self.layers.keys())
         return []
     
     def hasConfig(self, item):
-        return self.layer.has_key(item)
+        return item in self.layer
         
     def getConfig(self, item):
         sys.stderr.write('Getting config for %s' % (item,))
@@ -88,7 +88,7 @@ class Config (object):
                 self.loadedConfigs[configtype]=getattr(config_mod, 
                                                        class_name)
                 return self.loadedConfigs[configtype]
-            except Exception, e:
+            except Exception as e:
                 raise TileCacheException("Configuration include of " \
                                          "type %s supported, but import failed" \
                                          " (%s)"
@@ -196,7 +196,7 @@ class Config (object):
         if config.has_option(section, "urls"):
             urls = config.get(section, "urls")
             
-            for url in csv.reader([re.sub(r'\s', '', urls)], delimiter=',', quotechar='"').next():
+            for url in next(csv.reader([re.sub(r'\s', '', urls)], delimiter=',', quotechar='"')):
                 
                 have = False
                 
@@ -223,7 +223,7 @@ class Config (object):
             
             ##### multiple dsn's seperated by , with "" quotes #####
             
-            for dsn in csv.reader([pg], delimiter=',', quotechar='"').next():
+            for dsn in next(csv.reader([pg], delimiter=',', quotechar='"')):
                 dsndict = {}
                 
                 have = False

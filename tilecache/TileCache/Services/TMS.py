@@ -6,7 +6,7 @@ import TileCache.Layer as Layer
 class TMS (Request):
     def parse (self, fields, path, host):
         # /1.0.0/global_mosaic/0/0/0.jpg
-        parts = filter( lambda x: x != "", path.split("/") )
+        parts = [x for x in path.split("/") if x != ""]
         if not host[-1] == "/": host = host + "/"
         if len(parts) < 1:
             return self.serverCapabilities(host)
@@ -19,7 +19,7 @@ class TMS (Request):
             else:
                 parts[-1] = parts[-1].split(".")[0]
                 tile = None
-                if layer.tms_type == "google" or (fields.has_key('type') and fields['type'] == 'google'):
+                if layer.tms_type == "google" or ('type' in fields and fields['type'] == 'google'):
                     res = layer.resolutions[int(parts[2])]
                     maxY = int(
                       round(
@@ -43,7 +43,7 @@ class TMS (Request):
             <TileMapService version="1.0.0">
               <TileMaps>"""
 
-        for name, layer in layers.items():
+        for name, layer in list(layers.items()):
             profile = "none"
             if (layer.srs == "EPSG:4326"): profile = "global-geodetic"
             elif (layer.srs == "OSGEO:41001"): profile = "global-mercator"

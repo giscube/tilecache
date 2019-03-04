@@ -10,9 +10,9 @@ class WMTS (Request):
                         }
     def parse (self, fields, path, host):
         for key in ['scale','layer','tilerow','tilecol']: 
-            if fields.has_key(key.upper()):
+            if key.upper() in fields:
                 fields[key] = fields[key.upper()] 
-            elif not fields.has_key(key):
+            elif key not in fields:
                 fields[key] = ""
         layer = self.getLayer(fields['layer'])
         if not layer.units:

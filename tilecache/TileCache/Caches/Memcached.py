@@ -7,7 +7,7 @@ class Memcached(Cache):
     def __init__ (self, servers = ['127.0.0.1:11211'], **kwargs):
         Cache.__init__(self, **kwargs)
         import memcache
-        if type(servers) is str: servers = map(str.strip, servers.split(","))
+        if type(servers) is str: servers = list(map(str.strip, servers.split(",")))
         self.cache = memcache.Client(servers, debug=0)
    
     def getKey(self, tile):

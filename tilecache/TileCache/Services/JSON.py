@@ -5,7 +5,7 @@ class JSON(TMS):
     def parse(self, fields, path, host):
         layers = {} 
         type = "object" 
-        if fields.has_key("type") and fields['type'] == "list":
+        if "type" in fields and fields['type'] == "list":
             layers = []
             type = "list"    
         
@@ -13,7 +13,7 @@ class JSON(TMS):
         if 'srs' in fields:
             match_srs = fields['srs']
         
-        for name, layer in self.service.layers.items():
+        for name, layer in list(self.service.layers.items()):
             if match_srs and layer.srs != match_srs:
                 continue
 
