@@ -788,6 +788,9 @@ class MetaLayer (Layer):
 
         data = self.renderTile(metatile)
         image = Image.open( io.BytesIO(data) )
+        
+        if hasattr(self, 'scale'):
+            self.size = (self.size[0] * self.scale, self.size[1] * self.scale)
 
         metaCols, metaRows = self.getMetaSize(metatile.z)
         metaHeight = metaRows * self.size[1] + 2 * self.metaBuffer[1]
@@ -827,7 +830,9 @@ class MetaLayer (Layer):
             try:
                 self.cache.lock(metatile)
                 image = None
-                if not force:
+                if not force and hasattr(self.cache, 'get_with_scale') and  hasattr(self, 'scale'):
+                    image = self.cache.get_with_scale(tile, self.scale)
+                elif not force:
                     image = self.cache.get(tile)
                 if not image:
                     image = self.renderMetaTile(metatile, tile)
