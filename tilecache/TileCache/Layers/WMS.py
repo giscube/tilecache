@@ -18,10 +18,14 @@ class WMS(MetaLayer):
         self.password = password
 
     def renderTile(self, tile):
+        if hasattr(self,'scale'):
+          width =  tile.size()[0] * self.scale
+          height = tile.size()[1] * self.scale
+
         wms = WMSClient.WMS( self.url, {
           "bbox": tile.bbox(),
-          "width": tile.size()[0],
-          "height": tile.size()[1],
+          "width": width,
+          "height": height,
           "srs": self.srs,
           "format": self.mime_type,
           "layers": self.layers,
